@@ -1,4 +1,50 @@
 body {
-    width: 300px;
-    height: 600px;
+    background: none;
+}
+
+/* #injected-div {
+    all: initial;
+} */
+
+#container {
+    position: sticky;
+    bottom: 0%;
+    width: 400px;
+    min-height: 450px;
+    margin: 0 auto;
+    background-color: rgb(186, 186, 186);
+    border-radius: 25px;
+    box-shadow: 5px 5px 15px 5px rgba(0, 0, 0, 0.5);
+}
+
+#container-header {
+    position: relative;
+    background-color: #a5a5a5;
+    border-radius: 25px 25px 0 0;
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+#ai-icon {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+}
+
+/* #close-ai-popup-btn { 
+    position: absolute;
+    top: 40%;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+} */
+
+#title-header {
+    text-align: center;
+    font-size: 2.3em;
+}
+
+#ai-content {
+    padding: 20px;
+    font-size: 1.3em;
 }

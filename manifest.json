@@ -21,6 +21,18 @@
     "background": {
         "service_worker": "service-worker.js"
     },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "images/icon-128.png",
+                "injected_html.html",
+                "style.css"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
     "content_scripts": [
         {
             "js": [
