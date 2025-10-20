@@ -24,6 +24,7 @@
     "web_accessible_resources": [
         {
             "resources": [
+                "images/drag-drop.png",
                 "images/icon-128.png",
                 "injected_html.html",
                 "style.css"
