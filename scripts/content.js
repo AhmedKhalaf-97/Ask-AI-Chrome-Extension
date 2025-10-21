@@ -23,16 +23,22 @@
 // When message receivd from service-worker.js, proceed.
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action === 'summarize') {
-        // document.getElementById("ai-result").innerText = await summarizePage(message.data);
+        const extensionUI = document.getElementById("draggableIframeWrapper") || null;
 
-
+        if (extensionUI) {
+            console.log("open extension");
+            openExtensionUI(extensionUI, message.data);
+        }
+        else {
+            console.log("create extension");
+            await injectExtensionUIHtml(message.data);
+        }
     }
 });
 
-injectHTML();
+// injectExtensionUIHtml("Empty");
 
-
-async function injectHTML() {
+async function injectExtensionUIHtml(selectedText) {
     const injectedHTMLURL = chrome.runtime.getURL('injected_html.html');
     const injectedCSSURL = chrome.runtime.getURL('style.css');
     const aiIconURL = chrome.runtime.getURL('images/icon-128.png');
@@ -42,6 +48,8 @@ async function injectHTML() {
     draggableIframeWrapper.id = "draggableIframeWrapper";
     draggableIframeWrapper.setAttribute("draggable", "true");
     document.body.appendChild(draggableIframeWrapper);
+
+    DragElement(draggableIframeWrapper);
 
     const topBar = document.createElement("div");
     topBar.id = "topBar";
@@ -59,8 +67,10 @@ async function injectHTML() {
 
     const closeBtn = document.createElement("div");
     closeBtn.id = "closeBtn";
+    closeBtn.addEventListener("click", () => {
+        closeExtensionUI();
+    });
     topBar.appendChild(closeBtn);
-
 
     // Inject css styling.
     const cssLink = document.createElement("link");
@@ -72,7 +82,7 @@ async function injectHTML() {
     const metaTagElement = document.createElement("meta");
     metaTagElement.setAttribute("charset", "UTF-8");
 
-    // Inject extension html.
+    // Inject iframe html.
     const injectedIframe = document.createElement('iframe');
     injectedIframe.id = "injected-iframe";
     draggableIframeWrapper.appendChild(injectedIframe);
@@ -81,55 +91,46 @@ async function injectHTML() {
     injectedIframe.contentDocument.head.appendChild(cssLink.cloneNode(false));
     injectedIframe.contentDocument.head.appendChild(metaTagElement);
 
-    await fetch(injectedHTMLURL).then(res => res.text()).then(data => {
+    await fetch(injectedHTMLURL).then(res => res.text()).then(async data => {
         injectedIframe.contentDocument.body.innerHTML = data;
+
+        injectAIResult(selectedText);
+
     }).catch(e => console.error("Error loading extenstion HTML."));
-
-
-    // Update the extension html icon image.
-    // injectedIframe.contentDocument.getElementById("ai-icon").src = aiIconURL;
-
-
 }
 
-async function summarizePage(pageContent) {
-    if ('Summarizer' in self) {
-        // The Summarizer API is supported.
+function openExtensionUI(extensionUI, selectedText) {
+    extensionUI.style.display = 'block';
+    extensionUI.style.bottom = "0%";
+    extensionUI.style.left = "40%";
 
-        const availability = await Summarizer.availability();
-        if (availability === 'unavailable') {
-            // The Summarizer API isn't usable.
-            return "The Summarizer isn't available right now. Please try again.";
-        }
-
-        const summarizer = await Summarizer.create({
-            type: "key-points",
-            length: "short",
-            format: "plain-text"
-        });
-
-        const stream = await summarizer.summarize(pageContent);
-        // summaryResultElement.textContent += stream;
-        return stream;
-    }
+    injectAIResult(selectedText);
 }
 
-const draggableElement = document.getElementById("draggableIframeWrapper");
+function closeExtensionUI() {
+    const extensionUI = document.getElementById("draggableIframeWrapper")
 
-DragElement(draggableElement);
+    extensionUI.style.display = 'none';
+}
+
+async function injectAIResult(selectedText) {
+    const injectedIframe = document.getElementById("injected-iframe");
+    const aiResultTextArea = injectedIframe.contentDocument.getElementById("ai-result");
+
+    aiResultTextArea.innerHTML = "Generating...";
+    aiResultTextArea.classList.remove('disable-animations');
+
+    aiResultTextArea.innerHTML = marked.parse(await summarizePage(selectedText));
+    aiResultTextArea.classList.add('disable-animations');
+}
 
 function DragElement(element) {
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    if (document.getElementById(element.id + "header")) {
-        // if present, the header is where you move the DIV from:
-        document.getElementById(element.id + "header").onmousedown = dragMouseDown;
-    } else {
-        // otherwise, move the DIV from anywhere inside the DIV:
-        element.onmousedown = dragMouseDown;
-    }
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    element.onmousedown = dragMouseDown;
+
 
     function dragMouseDown(e) {
-        e = e || window.event;
         e.preventDefault();
         // get the mouse cursor position at startup:
         pos3 = e.clientX;
@@ -155,5 +156,27 @@ function DragElement(element) {
         // stop moving when mouse button is released:
         document.onmouseup = null;
         document.onmousemove = null;
+    }
+}
+
+async function summarizePage(pageContent) {
+    if ('Summarizer' in self) {
+        // The Summarizer API is supported.
+
+        const availability = await Summarizer.availability();
+        if (availability === 'unavailable') {
+            // The Summarizer API isn't usable.
+            return "The Summarizer isn't available right now. Please try again.";
+        }
+
+        const summarizer = await Summarizer.create({
+            type: "key-points",
+            length: "short",
+            format: "markdown"
+        });
+
+        const stream = await summarizer.summarize(pageContent);
+        // summaryResultElement.textContent += stream;
+        return stream;
     }
 }

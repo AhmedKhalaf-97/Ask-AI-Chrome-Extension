@@ -37,6 +37,7 @@
     "content_scripts": [
         {
             "js": [
+                "libraries/marked.min.js",
                 "scripts/content.js"
             ],
             "matches": [
