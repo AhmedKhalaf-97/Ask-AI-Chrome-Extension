@@ -20,25 +20,47 @@
 // });
 
 
+const AIModels = {
+    SUMMARIZER: "Summary",
+    PROOFREADER: "Proofread"
+};
+
 // When message receivd from service-worker.js, proceed.
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action === 'summarize') {
-        const extensionUI = document.getElementById("draggableIframeWrapper") || null;
+        initiateExtension(AIModels.SUMMARIZER, message.data);
+    }
 
-        if (extensionUI) {
-            console.log("open extension");
-            openExtensionUI(extensionUI, message.data);
-        }
-        else {
-            console.log("create extension");
-            await injectExtensionUIHtml(message.data);
-        }
+    if (message.action === 'proofread') {
+        initiateExtension(AIModels.PROOFREADER, message.data);
     }
 });
 
+async function initiateExtension(aiModel, selectedText) {
+    const extensionUI = document.getElementById("draggableIframeWrapper") || null;
+
+    if (extensionUI) {
+        openExtensionUI(extensionUI, aiModel, selectedText);
+    }
+    else {
+        await injectExtensionUIHtml(aiModel, selectedText);
+    }
+
+    const injectedIframe = document.getElementById("injected-iframe");
+    injectedIframe.contentDocument.getElementById("title-header").textContent = "🤖" + aiModel;
+
+    const contentHeader = injectedIframe.contentDocument.getElementById("ai-content").firstElementChild;
+    if (aiModel === AIModels.SUMMARIZER) {
+        contentHeader.textContent = "Key points:";
+    }
+    else if (aiModel === AIModels.PROOFREADER) {
+        contentHeader.textContent = "Result:";
+    }
+}
+
 // injectExtensionUIHtml("Empty");
 
-async function injectExtensionUIHtml(selectedText) {
+async function injectExtensionUIHtml(aiModel, selectedText) {
     const injectedHTMLURL = chrome.runtime.getURL('injected_html.html');
     const injectedCSSURL = chrome.runtime.getURL('style.css');
     const aiIconURL = chrome.runtime.getURL('images/icon-128.png');
@@ -94,17 +116,17 @@ async function injectExtensionUIHtml(selectedText) {
     await fetch(injectedHTMLURL).then(res => res.text()).then(async data => {
         injectedIframe.contentDocument.body.innerHTML = data;
 
-        injectAIResult(selectedText);
+        injectAIResult(aiModel, selectedText);
 
     }).catch(e => console.error("Error loading extenstion HTML."));
 }
 
-function openExtensionUI(extensionUI, selectedText) {
+function openExtensionUI(extensionUI, aiModel, selectedText) {
     extensionUI.style.display = 'block';
     extensionUI.style.bottom = "0%";
     extensionUI.style.left = "40%";
 
-    injectAIResult(selectedText);
+    injectAIResult(aiModel, selectedText);
 }
 
 function closeExtensionUI() {
@@ -113,14 +135,19 @@ function closeExtensionUI() {
     extensionUI.style.display = 'none';
 }
 
-async function injectAIResult(selectedText) {
+async function injectAIResult(aiModel, selectedText) {
     const injectedIframe = document.getElementById("injected-iframe");
     const aiResultTextArea = injectedIframe.contentDocument.getElementById("ai-result");
 
     aiResultTextArea.innerHTML = "Generating...";
     aiResultTextArea.classList.remove('disable-animations');
 
-    aiResultTextArea.innerHTML = marked.parse(await summarizePage(selectedText));
+    if (aiModel === AIModels.SUMMARIZER) {
+        aiResultTextArea.innerHTML = await marked.parse(await summarize(selectedText));
+    }
+    else if (aiModel === AIModels.PROOFREADER) {
+        aiResultTextArea.innerHTML = await proofread(selectedText);
+    }
     aiResultTextArea.classList.add('disable-animations');
 }
 
@@ -159,24 +186,89 @@ function DragElement(element) {
     }
 }
 
-async function summarizePage(pageContent) {
+async function summarize(content) {
+    let output = "";
+
     if ('Summarizer' in self) {
         // The Summarizer API is supported.
 
         const availability = await Summarizer.availability();
         if (availability === 'unavailable') {
             // The Summarizer API isn't usable.
-            return "The Summarizer isn't available right now. Please try again.";
+            output = "The Summarizer isn't available right now. Please try again.";
         }
+        else {
+            const summarizer = await Summarizer.create({
+                type: "key-points",
+                length: "short",
+                format: "markdown"
+            });
 
-        const summarizer = await Summarizer.create({
-            type: "key-points",
-            length: "short",
-            format: "markdown"
-        });
-
-        const stream = await summarizer.summarize(pageContent);
-        // summaryResultElement.textContent += stream;
-        return stream;
+            try {
+                output = await summarizer.summarize(content);
+            }
+            catch (error) {
+                output = "Input is too large or the Summarizer is not available right now. Please try again.";
+            }
+        }
     }
+    else {
+        output = "Your browser doesn't support the Summarizer API.";
+    }
+
+    return output;
+}
+
+
+async function proofread(content) {
+    let output = "";
+
+    if ('Proofreader' in self) {
+        const availability = await Proofreader.availability();
+
+        if (availability === 'unavailable') {
+            output = "The Proofreader isn't available right now. Please try again.";
+        }
+        else {
+            const proofreader = await Proofreader.create({
+                expectedInputLanguages: ['en'],
+            });
+
+            try {
+                const proofreadResult = await proofreader.proofread(content);
+                output = "<strong>Corrected text:</strong><br><br>";
+                output += proofreadResult.correctedInput;
+
+                output += "<br><br><hr><strong>Original text:</strong>"
+
+                let inputtedText = content;
+                let offset = 0;
+                for (const correction of proofreadResult.corrections) {
+                    inputtedText = inputtedText.slice(0, correction.startIndex + offset) + "<mark>" + inputtedText.slice(correction.startIndex + offset);
+                    offset += 6;
+                    inputtedText = inputtedText.slice(0, correction.endIndex + offset) + "</mark>" + inputtedText.slice(correction.endIndex + offset);
+                    offset += 7;
+                }
+
+                output += `<br><br>${inputtedText}`;
+
+                output += "<br><br><strong><i>*Corrections are highlighted above.</i></strong>";
+
+                output += "<br><br><strong>Corrections made:</strong>";
+
+                let i = 0;
+                for (const correction of proofreadResult.corrections) {
+                    output += `<br>${++i}. ${correction.correction}`;
+                }
+            }
+            catch (error) {
+                output = "Input is too large or the Proofreader is not available right now. Please try again.";
+            }
+        }
+    }
+    else {
+        output = "Your browser doesn't support the Proofreader API.";
+    }
+
+    return output;
 }
