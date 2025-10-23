@@ -61,64 +61,52 @@ async function initiateExtension(aiModel, selectedText) {
 // injectExtensionUIHtml("Empty");
 
 async function injectExtensionUIHtml(aiModel, selectedText) {
-    const injectedHTMLURL = chrome.runtime.getURL('injected_html.html');
+    const layoutURL = chrome.runtime.getURL('html-components/_layout.html');
+    const iframeCompURL = chrome.runtime.getURL('html-components/iframe_comp.html');
     const injectedCSSURL = chrome.runtime.getURL('style.css');
     const aiIconURL = chrome.runtime.getURL('images/icon-128.png');
     const dragIconURL = chrome.runtime.getURL('images/drag-drop.png');
 
-    const draggableIframeWrapper = document.createElement("div");
-    draggableIframeWrapper.id = "draggableIframeWrapper";
-    draggableIframeWrapper.setAttribute("draggable", "true");
-    document.body.appendChild(draggableIframeWrapper);
-
-    DragElement(draggableIframeWrapper);
-
-    const topBar = document.createElement("div");
-    topBar.id = "topBar";
-    draggableIframeWrapper.appendChild(topBar);
-
-    const aiIcon = document.createElement("img");
-    aiIcon.id = "ai-icon";
-    aiIcon.src = aiIconURL;
-    topBar.appendChild(aiIcon);
-
-    const dragIconImg = document.createElement("img");
-    dragIconImg.id = "dragIconImg";
-    dragIconImg.src = dragIconURL;
-    topBar.appendChild(dragIconImg);
-
-    const closeBtn = document.createElement("div");
-    closeBtn.id = "closeBtn";
-    closeBtn.addEventListener("click", () => {
-        closeExtensionUI();
-    });
-    topBar.appendChild(closeBtn);
-
-    // Inject css styling.
     const cssLink = document.createElement("link");
     cssLink.rel = "stylesheet";
     cssLink.type = "text/css";
     cssLink.href = injectedCSSURL;
-    document.head.appendChild(cssLink);
 
     const metaTagElement = document.createElement("meta");
     metaTagElement.setAttribute("charset", "UTF-8");
 
-    // Inject iframe html.
-    const injectedIframe = document.createElement('iframe');
-    injectedIframe.id = "injected-iframe";
-    draggableIframeWrapper.appendChild(injectedIframe);
+    await fetch(layoutURL).then(res => res.text()).then(async data => {
+
+        const layoutElement = document.createElement("div");
+        layoutElement.innerHTML = data;
+
+        document.body.appendChild(layoutElement);
+    });
 
 
+    const draggableIframeWrapper = document.getElementById("draggableIframeWrapper");
+    const aiIcon = document.getElementById("ai-icon");
+    const dragIconImg = document.getElementById("dragIconImg");
+    const closeBtn = document.getElementById("closeBtn");
+    const injectedIframe = document.getElementById('injected-iframe');
+
+    DragElement(draggableIframeWrapper);
+
+    aiIcon.src = aiIconURL;
+    dragIconImg.src = dragIconURL;
+    closeBtn.addEventListener("click", () => {
+        closeExtensionUI();
+    });
+
+    document.head.appendChild(cssLink);
     injectedIframe.contentDocument.head.appendChild(cssLink.cloneNode(false));
     injectedIframe.contentDocument.head.appendChild(metaTagElement);
 
-    await fetch(injectedHTMLURL).then(res => res.text()).then(async data => {
+    await fetch(iframeCompURL).then(res => res.text()).then(async data => {
         injectedIframe.contentDocument.body.innerHTML = data;
 
         injectAIResult(aiModel, selectedText);
-
-    }).catch(e => console.error("Error loading extenstion HTML."));
+    });
 }
 
 function openExtensionUI(extensionUI, aiModel, selectedText) {

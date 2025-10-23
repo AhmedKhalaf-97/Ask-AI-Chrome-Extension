@@ -26,8 +26,9 @@
             "resources": [
                 "images/drag-drop.png",
                 "images/icon-128.png",
-                "injected_html.html",
-                "style.css"
+                "style.css",
+                "html-components/_layout.html",
+                "html-components/iframe_comp.html"
             ],
             "matches": [
                 "<all_urls>"
