@@ -1,11 +1,3 @@
-/* body {
-    background: none;
-} */
-
-/* #injected-div {
-    all: initial;
-} */
-
 #draggableIframeWrapper {
     box-sizing: initial;
 
@@ -15,7 +7,7 @@
     bottom: 0%;
     left: 40%;
 
-    width: 400px;
+    width: 500px;
     height: 600px;
     z-index: 200;
 
@@ -111,16 +103,15 @@
 
 #title-header {
     text-align: center;
-    /* font-size: 2.3em; */
 }
 
 #ai-content {
     padding: 0px 20px 0px 20px;
-    font-size: 1.2em;
-
+    font-size: 1.1em;
+    margin-bottom: 100px;
 }
 
-#ai-result {
+#result-text {
     animation: colorPulse 3s infinite;
 }
 
@@ -138,4 +129,166 @@
 
 .disable-animations {
   animation: none !important;
+}
+
+.disable-element {
+    display: none !important;
+}
+
+#original-text-title, #result-text-title {
+    display: block;
+    padding-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+#original-text {
+    border-bottom: 1.5px solid gray;
+    padding-left: 10px;
+}
+
+#original-text, #result-text {
+    display: block;
+    padding-bottom: 30px;
+    margin-bottom: 25px;
+}
+
+
+
+#bottom-bar {
+    position: sticky;
+    bottom: 1%;
+    width: 99%;
+    font-size: 1.1em;
+    background-color: #888888;
+    border-radius: 25px;
+}
+
+#input-groups {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 1em;
+}
+
+#translator-input-gp {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 3em;
+}
+
+#rewriter-input-gp {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 5em;
+}
+
+#prompt-input-gp {
+    flex-grow: 1;
+    padding: 10px;
+}
+
+#prompt-input {
+    background-color: rgb(78, 78, 78);
+    color: white;
+    padding: 8px;
+    font-size: 15px;
+    border-radius: 25px;
+    width: 100%;
+
+}
+
+
+.dropdown {
+  position: relative;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+}
+
+/* Style the dropdown button */
+.dropbtn {
+  background-color: rgb(78, 78, 78);
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dropdown content */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  background-color: #f9f9f9;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  border-radius: 25px;
+}
+
+/* Links inside dropdown content */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+  border-radius: 25px;
+  cursor: pointer;
+}
+
+/* Show the dropdown content on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Close the dropdown content on click */
+.dropdown:active .dropdown-content {
+  display: none;
+}
+
+/* Change background color of dropdown button on hover */
+.dropdown:hover .dropbtn {
+  background-color: rgb(115, 115, 115);
+}
+
+
+
+.submit-btn {
+    width: 16px;
+    height: 16px;
+    padding: 15px;
+    background-color: rgb(78, 78, 78);
+    border-radius: 25px;
+}
+
+.submit-btn::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-color: red;
+    clip-path: polygon(25% 50%, 0 0, 100% 50%, 0 100%);
+}
+
+.submit-btn:hover {
+    background-color: rgb(115, 115, 115);
+    cursor: pointer;
+}
+
+.submit-btn:active {
+    background-color: rgb(78, 78, 78);
+    cursor: pointer;
+    transform: scale(0.9);
 }

@@ -22,45 +22,58 @@
 
 const AIModels = {
     SUMMARIZER: "Summary",
-    PROOFREADER: "Proofread"
+    PROOFREADER: "Proofread",
+    TRANSLATOR: "Translator",
+    REWRITER: "Rewriter",
+    WRITER: "Writer",
+    PROMPT: "Prompt"
 };
 
 // When message receivd from service-worker.js, proceed.
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if (message.action === 'summarize') {
+    if (message.action === AIModels.SUMMARIZER) {
         initiateExtension(AIModels.SUMMARIZER, message.data);
     }
 
-    if (message.action === 'proofread') {
+    if (message.action === AIModels.PROOFREADER) {
         initiateExtension(AIModels.PROOFREADER, message.data);
+    }
+
+    if (message.action === AIModels.TRANSLATOR) {
+        initiateExtension(AIModels.TRANSLATOR, message.data);
+    }
+
+    if (message.action === AIModels.REWRITER) {
+        initiateExtension(AIModels.REWRITER, message.data);
+    }
+
+    if (message.action === AIModels.WRITER) {
+        initiateExtension(AIModels.WRITER);
+    }
+
+    if (message.action === AIModels.PROMPT) {
+        initiateExtension(AIModels.PROMPT);
     }
 });
 
+// initiateExtension(AIModels.PROMPT);
+
 async function initiateExtension(aiModel, selectedText) {
-    const extensionUI = document.getElementById("draggableIframeWrapper") || null;
+    let extensionUI = document.getElementById("draggableIframeWrapper") || null;
 
     if (extensionUI) {
-        openExtensionUI(extensionUI, aiModel, selectedText);
+        openExtensionUI(extensionUI, aiModel);
     }
     else {
-        await injectExtensionUIHtml(aiModel, selectedText);
+        extensionUI = await injectExtensionUI(aiModel);
     }
 
-    const injectedIframe = document.getElementById("injected-iframe");
-    injectedIframe.contentDocument.getElementById("title-header").textContent = "🤖" + aiModel;
+    setExtensionUI(extensionUI, aiModel, selectedText);
 
-    const contentHeader = injectedIframe.contentDocument.getElementById("ai-content").firstElementChild;
-    if (aiModel === AIModels.SUMMARIZER) {
-        contentHeader.textContent = "Key points:";
-    }
-    else if (aiModel === AIModels.PROOFREADER) {
-        contentHeader.textContent = "Result:";
-    }
+    // injectAIResult(aiModel, selectedText);
 }
 
-// injectExtensionUIHtml("Empty");
-
-async function injectExtensionUIHtml(aiModel, selectedText) {
+async function injectExtensionUI(aiModel) {
     const layoutURL = chrome.runtime.getURL('html-components/_layout.html');
     const iframeCompURL = chrome.runtime.getURL('html-components/iframe_comp.html');
     const injectedCSSURL = chrome.runtime.getURL('style.css');
@@ -102,19 +115,89 @@ async function injectExtensionUIHtml(aiModel, selectedText) {
     injectedIframe.contentDocument.head.appendChild(cssLink.cloneNode(false));
     injectedIframe.contentDocument.head.appendChild(metaTagElement);
 
+
     await fetch(iframeCompURL).then(res => res.text()).then(async data => {
         injectedIframe.contentDocument.body.innerHTML = data;
-
-        injectAIResult(aiModel, selectedText);
     });
+
+    return draggableIframeWrapper;
 }
 
-function openExtensionUI(extensionUI, aiModel, selectedText) {
+function openExtensionUI(extensionUI, aiModel) {
     extensionUI.style.display = 'block';
     extensionUI.style.bottom = "0%";
     extensionUI.style.left = "40%";
+}
 
-    injectAIResult(aiModel, selectedText);
+function setExtensionUI(extensionUI, aiModel, selectedText) {
+    const injectedIframe = document.getElementById("injected-iframe");
+    const extensionTitleHeader = injectedIframe.contentDocument.getElementById("title-header");
+    const originalTextTitle = injectedIframe.contentDocument.getElementById("original-text-title");
+    const originalText = injectedIframe.contentDocument.getElementById("original-text");
+    const resultTextTitle = injectedIframe.contentDocument.getElementById("result-text-title");
+    const resultText = injectedIframe.contentDocument.getElementById("result-text");
+    const bottomBar = injectedIframe.contentDocument.getElementById("bottom-bar");
+    const translatorInputGrp = injectedIframe.contentDocument.getElementById("translator-input-gp");
+    const rewriterInputGrp = injectedIframe.contentDocument.getElementById("rewriter-input-gp");
+    const promptInputGrp = injectedIframe.contentDocument.getElementById("prompt-input-gp");
+
+
+    extensionTitleHeader.textContent = "🤖" + aiModel;
+
+
+    if (aiModel === AIModels.SUMMARIZER) {
+        originalTextTitle.classList.add('disable-element');
+        originalText.classList.add('disable-element');
+        resultTextTitle.classList.remove('disable-element');
+        resultTextTitle.textContent = "Key points:";
+        bottomBar.classList.add('disable-element');
+    }
+    else if (aiModel === AIModels.PROOFREADER) {
+        originalTextTitle.classList.add('disable-element');
+        originalText.classList.add('disable-element');
+        resultTextTitle.classList.add('disable-element');
+        bottomBar.classList.add('disable-element');
+    }
+    else if (aiModel === AIModels.TRANSLATOR) {
+        originalTextTitle.classList.remove('disable-element');
+        originalText.classList.remove('disable-element');
+        originalText.textContent = selectedText;
+        resultTextTitle.classList.remove('disable-element');
+        resultTextTitle.textContent = "Translation:";
+        bottomBar.classList.remove('disable-element');
+        translatorInputGrp.classList.remove('disable-element');
+        rewriterInputGrp.classList.add('disable-element');
+        promptInputGrp.classList.add('disable-element');
+    }
+    else if (aiModel === AIModels.REWRITER) {
+        originalTextTitle.classList.remove('disable-element');
+        originalText.classList.remove('disable-element');
+        originalText.textContent = selectedText;
+        resultTextTitle.classList.remove('disable-element');
+        resultTextTitle.textContent = "Rewritten text:";
+        bottomBar.classList.remove('disable-element');
+        translatorInputGrp.classList.add('disable-element');
+        rewriterInputGrp.classList.remove('disable-element');
+        promptInputGrp.classList.add('disable-element');
+    }
+    else if (aiModel === AIModels.WRITER) {
+        originalTextTitle.classList.add('disable-element');
+        originalText.classList.add('disable-element');
+        resultTextTitle.classList.add('disable-element');
+        bottomBar.classList.remove('disable-element');
+        translatorInputGrp.classList.add('disable-element');
+        rewriterInputGrp.classList.add('disable-element');
+        promptInputGrp.classList.remove('disable-element');
+    }
+    else if (aiModel === AIModels.PROMPT) {
+        originalTextTitle.classList.add('disable-element');
+        originalText.classList.add('disable-element');
+        resultTextTitle.classList.add('disable-element');
+        bottomBar.classList.remove('disable-element');
+        translatorInputGrp.classList.add('disable-element');
+        rewriterInputGrp.classList.add('disable-element');
+        promptInputGrp.classList.remove('disable-element');
+    }
 }
 
 function closeExtensionUI() {
@@ -125,7 +208,7 @@ function closeExtensionUI() {
 
 async function injectAIResult(aiModel, selectedText) {
     const injectedIframe = document.getElementById("injected-iframe");
-    const aiResultTextArea = injectedIframe.contentDocument.getElementById("ai-result");
+    const aiResultTextArea = injectedIframe.contentDocument.getElementById("result-text");
 
     aiResultTextArea.innerHTML = "Generating...";
     aiResultTextArea.classList.remove('disable-animations');
@@ -227,7 +310,7 @@ async function proofread(content) {
                 output = "<strong>Corrected text:</strong><br><br>";
                 output += proofreadResult.correctedInput;
 
-                output += "<br><br><hr><strong>Original text:</strong>"
+                output += "<br><br><hr><br><strong>Original text:</strong>"
 
                 let inputtedText = content;
                 let offset = 0;
