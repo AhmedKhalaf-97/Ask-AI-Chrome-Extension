@@ -39,6 +39,7 @@
         {
             "js": [
                 "libraries/marked.min.js",
+                "scripts/APIs.js",
                 "scripts/content.js"
             ],
             "matches": [

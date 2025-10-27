@@ -185,7 +185,8 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding-left: 5em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
 }
 
 #prompt-input-gp {
