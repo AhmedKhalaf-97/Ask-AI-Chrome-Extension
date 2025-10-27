@@ -24,11 +24,15 @@
                 <span><b>to</b></span>
             </p>
             <div class="dropdown">
-                <button class="dropbtn" id="language-dropdown">Select a Language ⤴️</button>
-                <div class="dropdown-content">
-                    <a>English</a>
-                    <a>Spanish</a>
-                    <a>French</a>
+                <button class="dropbtn" id="lang-dropdown-btn">Select a Language ⤴️</button>
+                <div class="dropdown-content" id="lang-dropdown-content">
+                    <a id="en">English</a>
+                    <a id="es">Spanish</a>
+                    <a id="fr">French</a>
+                    <a id="de">German</a>
+                    <a id="ar">Arabic</a>
+                    <a id="zh">Chinese</a>
+                    <a id="pt">Portuguese</a>
                 </div>
             </div>
         </div>
@@ -36,7 +40,7 @@
             <span><b>Tone:</b></span>
             <div class="dropdown">
                 <button class="dropbtn" id="tone-dropdown">Select the Tone: ⤴️</button>
-                <div class="dropdown-content">
+                <div class="dropdown-content" id="tone-dropdown-content">
                     <a>Default</a>
                     <a>Casual</a>
                     <a>Professional</a>
@@ -46,6 +50,6 @@
         <div id="prompt-input-gp">
             <input type="text" id="prompt-input" placeholder="Ask anything">
         </div>
-        <div class="submit-btn"></div>
+        <div id="submit-btn"></div>
     </div>
 </div>

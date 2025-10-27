@@ -144,13 +144,13 @@
 
 #original-text {
     border-bottom: 1.5px solid gray;
-    padding-left: 10px;
 }
 
 #original-text, #result-text {
     display: block;
     padding-bottom: 30px;
     margin-bottom: 25px;
+    padding-left: 10px;
 }
 
 
@@ -253,10 +253,10 @@
   display: block;
 }
 
-/* Close the dropdown content on click */
-.dropdown:active .dropdown-content {
-  display: none;
-}
+/* Close the dropdown content*/
+/* .close-dropdown-content {
+  display: none !important;
+} */
 
 /* Change background color of dropdown button on hover */
 .dropdown:hover .dropbtn {
@@ -265,7 +265,7 @@
 
 
 
-.submit-btn {
+#submit-btn {
     width: 16px;
     height: 16px;
     padding: 15px;
@@ -273,7 +273,7 @@
     border-radius: 25px;
 }
 
-.submit-btn::before {
+#submit-btn::before {
     content: '';
     position: absolute;
     width: 16px;
@@ -282,13 +282,19 @@
     clip-path: polygon(25% 50%, 0 0, 100% 50%, 0 100%);
 }
 
-.submit-btn:hover {
+#submit-btn:hover {
     background-color: rgb(115, 115, 115);
     cursor: pointer;
 }
 
-.submit-btn:active {
+#submit-btn:active {
     background-color: rgb(78, 78, 78);
     cursor: pointer;
     transform: scale(0.9);
+}
+
+.submit-btn-disabled {
+    background-color: rgb(115,115,115) !important;
+    cursor: default;
+    pointer-events: none;
 }

@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 });
 
-// initiateExtension(AIModels.PROMPT);
+// initiateExtension(AIModels.TRANSLATOR);
 
 async function initiateExtension(aiModel, selectedText) {
     let extensionUI = document.getElementById("draggableIframeWrapper") || null;
@@ -69,8 +69,6 @@ async function initiateExtension(aiModel, selectedText) {
     }
 
     setExtensionUI(extensionUI, aiModel, selectedText);
-
-    // injectAIResult(aiModel, selectedText);
 }
 
 async function injectExtensionUI(aiModel) {
@@ -129,7 +127,7 @@ function openExtensionUI(extensionUI, aiModel) {
     extensionUI.style.left = "40%";
 }
 
-function setExtensionUI(extensionUI, aiModel, selectedText) {
+async function setExtensionUI(extensionUI, aiModel, selectedText) {
     const injectedIframe = document.getElementById("injected-iframe");
     const extensionTitleHeader = injectedIframe.contentDocument.getElementById("title-header");
     const originalTextTitle = injectedIframe.contentDocument.getElementById("original-text-title");
@@ -140,9 +138,13 @@ function setExtensionUI(extensionUI, aiModel, selectedText) {
     const translatorInputGrp = injectedIframe.contentDocument.getElementById("translator-input-gp");
     const rewriterInputGrp = injectedIframe.contentDocument.getElementById("rewriter-input-gp");
     const promptInputGrp = injectedIframe.contentDocument.getElementById("prompt-input-gp");
-
+    const translatorInputtedLang = injectedIframe.contentDocument.getElementById("translator-inputted-lang");
+    const submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
     extensionTitleHeader.textContent = "🤖" + aiModel;
+
+    resultText.textContent = "";
+    resultText.classList.add('disable-animations');
 
 
     if (aiModel === AIModels.SUMMARIZER) {
@@ -151,14 +153,23 @@ function setExtensionUI(extensionUI, aiModel, selectedText) {
         resultTextTitle.classList.remove('disable-element');
         resultTextTitle.textContent = "Key points:";
         bottomBar.classList.add('disable-element');
+
+        injectAIResult(aiModel, selectedText);
     }
     else if (aiModel === AIModels.PROOFREADER) {
         originalTextTitle.classList.add('disable-element');
         originalText.classList.add('disable-element');
         resultTextTitle.classList.add('disable-element');
         bottomBar.classList.add('disable-element');
+
+        injectAIResult(aiModel, selectedText);
     }
     else if (aiModel === AIModels.TRANSLATOR) {
+        const langDropdownBtn = injectedIframe.contentDocument.getElementById("lang-dropdown-btn");
+        const langDropdown = injectedIframe.contentDocument.getElementById("lang-dropdown-content");
+
+        langDropdownBtn.textContent = "Select a Language ⤴️";
+
         originalTextTitle.classList.remove('disable-element');
         originalText.classList.remove('disable-element');
         originalText.textContent = selectedText;
@@ -168,6 +179,43 @@ function setExtensionUI(extensionUI, aiModel, selectedText) {
         translatorInputGrp.classList.remove('disable-element');
         rewriterInputGrp.classList.add('disable-element');
         promptInputGrp.classList.add('disable-element');
+
+        submitBtn.classList.add("submit-btn-disabled");
+
+        resultText.innerHTML = "<em><b>Select a language from the dropdown menu below, then click the send button to start translating.</b></em>";
+
+        const displayLangName = new Intl.DisplayNames(['en'], { type: 'language' });
+        const detectedLang = await detectLanguage(selectedText);
+        const detectedLangName = displayLangName.of(detectedLang);
+        translatorInputtedLang.textContent = detectedLangName;
+
+        let targetLang = "";
+
+        const langDropdownContent = langDropdown.children;
+        for (const child of langDropdownContent) {
+            child.addEventListener("click", () => {
+                targetLang = child.id;
+                langDropdownBtn.textContent = child.textContent + " ⤴️";
+
+                if (detectedLang === targetLang) {
+                    resultText.innerHTML = "<em><b>Can't translate to the same language. Please select another language.</b></em>";
+                    submitBtn.classList.add("submit-btn-disabled");
+                }
+                else {
+                    resultText.innerHTML = `<em><b>Translate from <u>${detectedLangName}</u> to <u>${child.textContent}</u> </b></em>`;
+                    submitBtn.classList.remove("submit-btn-disabled");
+                }
+
+            });
+        }
+
+        submitBtn.addEventListener("click", () => {
+            injectAIResult(AIModels.TRANSLATOR, selectedText, { sourceLang: detectedLang, targetedLang: targetLang });
+            submitBtn.classList.add("submit-btn-disabled");
+        });
+
+
+        // add event listener for the submit btn to start injectAIResult()
     }
     else if (aiModel === AIModels.REWRITER) {
         originalTextTitle.classList.remove('disable-element');
@@ -179,6 +227,8 @@ function setExtensionUI(extensionUI, aiModel, selectedText) {
         translatorInputGrp.classList.add('disable-element');
         rewriterInputGrp.classList.remove('disable-element');
         promptInputGrp.classList.add('disable-element');
+
+        submitBtn.classList.remove("submit-btn-disabled");
     }
     else if (aiModel === AIModels.WRITER) {
         originalTextTitle.classList.add('disable-element');
@@ -188,6 +238,8 @@ function setExtensionUI(extensionUI, aiModel, selectedText) {
         translatorInputGrp.classList.add('disable-element');
         rewriterInputGrp.classList.add('disable-element');
         promptInputGrp.classList.remove('disable-element');
+
+        submitBtn.classList.remove("submit-btn-disabled");
     }
     else if (aiModel === AIModels.PROMPT) {
         originalTextTitle.classList.add('disable-element');
@@ -197,6 +249,8 @@ function setExtensionUI(extensionUI, aiModel, selectedText) {
         translatorInputGrp.classList.add('disable-element');
         rewriterInputGrp.classList.add('disable-element');
         promptInputGrp.classList.remove('disable-element');
+
+        submitBtn.classList.remove("submit-btn-disabled");
     }
 }
 
@@ -206,9 +260,10 @@ function closeExtensionUI() {
     extensionUI.style.display = 'none';
 }
 
-async function injectAIResult(aiModel, selectedText) {
+async function injectAIResult(aiModel, selectedText, additionalParams) {
     const injectedIframe = document.getElementById("injected-iframe");
     const aiResultTextArea = injectedIframe.contentDocument.getElementById("result-text");
+    const submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
     aiResultTextArea.innerHTML = "Generating...";
     aiResultTextArea.classList.remove('disable-animations');
@@ -219,6 +274,16 @@ async function injectAIResult(aiModel, selectedText) {
     else if (aiModel === AIModels.PROOFREADER) {
         aiResultTextArea.innerHTML = await proofread(selectedText);
     }
+    else if (aiModel === AIModels.TRANSLATOR) {
+        try {
+            aiResultTextArea.innerHTML = await translate(selectedText, additionalParams.sourceLang, additionalParams.targetedLang);
+        }
+        catch {
+            aiResultTextArea.innerHTML = "The Translator is still downloading. Please try again.";
+        }
+        submitBtn.classList.remove("submit-btn-disabled");
+    }
+
     aiResultTextArea.classList.add('disable-animations');
 }
 
@@ -339,6 +404,84 @@ async function proofread(content) {
     }
     else {
         output = "Your browser doesn't support the Proofreader API.";
+    }
+
+    return output;
+}
+
+async function detectLanguage(content) {
+    let output = "";
+
+    if ('LanguageDetector' in self) {
+        const availability = await LanguageDetector.availability();
+
+        if (availability === 'unavailable') {
+            output = "The Language Detector isn't available right now. Please try again.";
+        }
+        else {
+            const langDetector = await LanguageDetector.create();
+
+            try {
+                const detectionResults = await langDetector.detect(content);
+                output = detectionResults[0].detectedLanguage;
+            }
+            catch (error) {
+                output = "Input is too large or the Language Detector is not available right now. Please try again.";
+            }
+        }
+    }
+    else {
+        output = "Your browser doesn't support the Language Detector API.";
+    }
+
+    return output;
+}
+
+async function translate(content, sourceLang, targetLang) {
+    let output = "";
+
+    if ('Translator' in self) {
+        const availability = await Translator.availability({
+            sourceLanguage: sourceLang,
+            targetLanguage: targetLang,
+        });
+
+        if (availability === 'unavailable') {
+            output = "The Translator isn't available right now. Please try again.";
+        }
+        else if (availability === 'downloading') {
+            output = "The Translator is still downloading. Please try again.";
+            await Translator.create({
+                sourceLanguage: sourceLang,
+                targetLanguage: targetLang,
+            });
+        }
+        else if (availability === 'downloadable') {
+            output = "The Translator is still downloading. Please try again.";
+            await Translator.create({
+                sourceLanguage: sourceLang,
+                targetLanguage: targetLang,
+            });
+        }
+        else if (availability === 'available') {
+            const translator = await Translator.create({
+                sourceLanguage: sourceLang,
+                targetLanguage: targetLang,
+            });
+
+            try {
+                output = await translator.translate(content);
+            }
+            catch (error) {
+                output = "Input is too large or the Translator is not available right now. Please try again.";
+            }
+        }
+        else {
+            output = "The Translator is still downloading or isn't available right now. Please try again.";
+        }
+    }
+    else {
+        output = "Your browser doesn't support the Translator API.";
     }
 
     return output;
