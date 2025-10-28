@@ -127,8 +127,6 @@ function openExtensionUI(extensionUI, aiModel) {
     extensionUI.style.left = "40%";
 }
 
-const submitBtnController = new AbortController();
-const submitBtnSignal = submitBtnController.signal;
 
 async function setExtensionUI(extensionUI, aiModel, selectedText) {
     const injectedIframe = document.getElementById("injected-iframe");
@@ -142,14 +140,17 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
     const rewriterInputGrp = injectedIframe.contentDocument.getElementById("rewriter-input-gp");
     const promptInputGrp = injectedIframe.contentDocument.getElementById("prompt-input-gp");
     const translatorInputtedLang = injectedIframe.contentDocument.getElementById("translator-inputted-lang");
-    const submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
-
-    submitBtnController.abort();
+    let submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
     extensionTitleHeader.textContent = "🤖" + aiModel;
 
     resultText.textContent = "";
     resultText.classList.add('disable-animations');
+
+    // Reset all event listeners associated with the submit button.
+    const clonedSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.replaceWith(clonedSubmitBtn);
+    submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
     if (aiModel === AIModels.SUMMARIZER) {
         originalTextTitle.classList.add('disable-element');
@@ -216,7 +217,7 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         submitBtn.addEventListener("click", () => {
             injectAIResult(AIModels.TRANSLATOR, selectedText, { sourceLang: detectedLang, targetedLang: targetLang });
             submitBtn.classList.add("submit-btn-disabled");
-        }, { submitBtnSignal });
+        });
     }
     else if (aiModel === AIModels.REWRITER) {
         const toneDropdownBtn = injectedIframe.contentDocument.getElementById("tone-dropdown-btn");
@@ -271,7 +272,7 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         submitBtn.addEventListener("click", () => {
             injectAIResult(AIModels.REWRITER, selectedText, { _tone: tone, _length: length });
             submitBtn.classList.add("submit-btn-disabled");
-        }, { submitBtnSignal });
+        });
     }
     else if (aiModel === AIModels.WRITER) {
         originalTextTitle.classList.add('disable-element');
