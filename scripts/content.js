@@ -56,9 +56,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 });
 
-// initiateExtension(AIModels.REWRITER);
+initiateExtension(AIModels.WRITER);
 
-async function initiateExtension(aiModel, selectedText) {
+async function initiateExtension(aiModel, inputText) {
     let extensionUI = document.getElementById("draggableIframeWrapper") || null;
 
     if (extensionUI) {
@@ -68,7 +68,7 @@ async function initiateExtension(aiModel, selectedText) {
         extensionUI = await injectExtensionUI(aiModel);
     }
 
-    setExtensionUI(extensionUI, aiModel, selectedText);
+    setExtensionUI(extensionUI, aiModel, inputText);
 }
 
 async function injectExtensionUI(aiModel) {
@@ -128,7 +128,7 @@ function openExtensionUI(extensionUI, aiModel) {
 }
 
 
-async function setExtensionUI(extensionUI, aiModel, selectedText) {
+async function setExtensionUI(extensionUI, aiModel, inputText) {
     const injectedIframe = document.getElementById("injected-iframe");
     const extensionTitleHeader = injectedIframe.contentDocument.getElementById("title-header");
     const originalTextTitle = injectedIframe.contentDocument.getElementById("original-text-title");
@@ -138,8 +138,11 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
     const bottomBar = injectedIframe.contentDocument.getElementById("bottom-bar");
     const translatorInputGrp = injectedIframe.contentDocument.getElementById("translator-input-gp");
     const rewriterInputGrp = injectedIframe.contentDocument.getElementById("rewriter-input-gp");
+    const writerInputGrp = injectedIframe.contentDocument.getElementById("writer-input-gp");
     const promptInputGrp = injectedIframe.contentDocument.getElementById("prompt-input-gp");
     const translatorInputtedLang = injectedIframe.contentDocument.getElementById("translator-inputted-lang");
+    const resultAreaBlock = injectedIframe.contentDocument.getElementById("result-block");
+    const promptAreaBlock = injectedIframe.contentDocument.getElementById("prompt-results-area");
     let submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
     extensionTitleHeader.textContent = "🤖" + aiModel;
@@ -153,21 +156,25 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
     submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
     if (aiModel === AIModels.SUMMARIZER) {
+        resultAreaBlock.classList.remove("disable-element");
+        promptAreaBlock.classList.add("disable-element");
         originalTextTitle.classList.add('disable-element');
         originalText.classList.add('disable-element');
         resultTextTitle.classList.remove('disable-element');
         resultTextTitle.textContent = "Key points:";
         bottomBar.classList.add('disable-element');
 
-        injectAIResult(aiModel, selectedText);
+        injectAIResult(aiModel, inputText);
     }
     else if (aiModel === AIModels.PROOFREADER) {
+        resultAreaBlock.classList.remove("disable-element");
+        promptAreaBlock.classList.add("disable-element");
         originalTextTitle.classList.add('disable-element');
         originalText.classList.add('disable-element');
         resultTextTitle.classList.add('disable-element');
         bottomBar.classList.add('disable-element');
 
-        injectAIResult(aiModel, selectedText);
+        injectAIResult(aiModel, inputText);
     }
     else if (aiModel === AIModels.TRANSLATOR) {
         const langDropdownBtn = injectedIframe.contentDocument.getElementById("lang-dropdown-btn");
@@ -175,14 +182,17 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
 
         langDropdownBtn.textContent = "Select a Language ⤴️";
 
+        resultAreaBlock.classList.remove("disable-element");
+        promptAreaBlock.classList.add("disable-element");
         originalTextTitle.classList.remove('disable-element');
         originalText.classList.remove('disable-element');
-        originalText.textContent = selectedText;
+        originalText.textContent = inputText;
         resultTextTitle.classList.remove('disable-element');
         resultTextTitle.textContent = "Translation:";
         bottomBar.classList.remove('disable-element');
         translatorInputGrp.classList.remove('disable-element');
         rewriterInputGrp.classList.add('disable-element');
+        writerInputGrp.classList.add('disable-element');
         promptInputGrp.classList.add('disable-element');
 
         submitBtn.classList.add("submit-btn-disabled");
@@ -190,7 +200,7 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         resultText.innerHTML = "<em><b>Select a language from the dropdown menu below, then click the send button to start translating.</b></em>";
 
         const displayLangName = new Intl.DisplayNames(['en'], { type: 'language' });
-        const detectedLang = await detectLanguage(selectedText);
+        const detectedLang = await detectLanguage(inputText);
         const detectedLangName = displayLangName.of(detectedLang);
         translatorInputtedLang.textContent = detectedLangName;
 
@@ -215,7 +225,7 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         }
 
         submitBtn.addEventListener("click", () => {
-            injectAIResult(AIModels.TRANSLATOR, selectedText, { sourceLang: detectedLang, targetedLang: targetLang });
+            injectAIResult(AIModels.TRANSLATOR, inputText, { sourceLang: detectedLang, targetedLang: targetLang });
             submitBtn.classList.add("submit-btn-disabled");
         });
     }
@@ -228,15 +238,18 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         toneDropdownBtn.textContent = "Select the Tone: ⤴️";
         lengthDropdownBtn.textContent = "Select the Length: ⤴️";
 
+        resultAreaBlock.classList.remove("disable-element");
+        promptAreaBlock.classList.add("disable-element");
         originalTextTitle.classList.remove('disable-element');
         originalText.classList.remove('disable-element');
-        originalText.textContent = selectedText;
+        originalText.textContent = inputText;
         resultTextTitle.classList.remove('disable-element');
         resultTextTitle.textContent = "Rewritten text:";
         bottomBar.classList.remove('disable-element');
         translatorInputGrp.classList.add('disable-element');
         rewriterInputGrp.classList.remove('disable-element');
         promptInputGrp.classList.add('disable-element');
+        writerInputGrp.classList.add('disable-element');
 
         submitBtn.classList.add("submit-btn-disabled");
 
@@ -270,22 +283,99 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         }
 
         submitBtn.addEventListener("click", () => {
-            injectAIResult(AIModels.REWRITER, selectedText, { _tone: tone, _length: length });
+            injectAIResult(AIModels.REWRITER, inputText, { _tone: tone, _length: length });
             submitBtn.classList.add("submit-btn-disabled");
         });
     }
     else if (aiModel === AIModels.WRITER) {
+        const toneDropdownBtn = injectedIframe.contentDocument.getElementById("w-tone-dropdown-btn");
+        const toneDropdown = injectedIframe.contentDocument.getElementById("w-tone-dropdown-content");
+        const lengthDropdownBtn = injectedIframe.contentDocument.getElementById("w-length-dropdown-btn");
+        const lengthDropdown = injectedIframe.contentDocument.getElementById("w-length-dropdown-content");
+        const writerPromptInput = injectedIframe.contentDocument.getElementById("w-prompt-input");
+
+        toneDropdownBtn.textContent = "Select the Tone: ⤴️";
+        lengthDropdownBtn.textContent = "Select the Length: ⤴️";
+        writerPromptInput.disabled = false;
+
+        resultAreaBlock.classList.add("disable-element");
+        promptAreaBlock.classList.remove("disable-element");
         originalTextTitle.classList.add('disable-element');
         originalText.classList.add('disable-element');
         resultTextTitle.classList.add('disable-element');
         bottomBar.classList.remove('disable-element');
         translatorInputGrp.classList.add('disable-element');
         rewriterInputGrp.classList.add('disable-element');
-        promptInputGrp.classList.remove('disable-element');
+        promptInputGrp.classList.add('disable-element');
+        writerInputGrp.classList.remove('disable-element');
 
-        submitBtn.classList.remove("submit-btn-disabled");
+        submitBtn.classList.add("submit-btn-disabled");
+
+        resultText.innerHTML = "<em><b>Make a selection below, ask the writer, then click the send button to start writing.</b></em>";
+
+        let tone = "";
+        let length = "";
+
+        const toneDropdownContent = toneDropdown.children;
+        for (const child of toneDropdownContent) {
+            child.addEventListener("click", () => {
+                tone = child.id;
+                toneDropdownBtn.textContent = "Tone: " + child.textContent + " ⤴️";
+
+                if (writerPromptInput.value && tone && length) {
+                    submitBtn.classList.remove("submit-btn-disabled");
+                }
+                else {
+                    submitBtn.classList.add("submit-btn-disabled");
+                }
+            });
+        }
+
+        const lengthDropdownContent = lengthDropdown.children;
+        for (const child of lengthDropdownContent) {
+            child.addEventListener("click", () => {
+                length = child.id;
+                lengthDropdownBtn.textContent = "Length: " + child.textContent + " ⤴️";
+
+                if (writerPromptInput.value && tone && length) {
+                    submitBtn.classList.remove("submit-btn-disabled");
+                }
+                else {
+                    submitBtn.classList.add("submit-btn-disabled");
+                }
+            });
+        }
+
+        writerPromptInput.addEventListener('input', () => {
+            if (writerPromptInput.value && tone && length) {
+                submitBtn.classList.remove("submit-btn-disabled");
+            }
+            else {
+                submitBtn.classList.add("submit-btn-disabled");
+            }
+        });
+
+        writerPromptInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                if (writerPromptInput.value && tone && length) {
+                    injectAIResult(AIModels.WRITER, writerPromptInput.value, { _tone: tone, _length: length });
+                    writerPromptInput.value = "";
+                    writerPromptInput.disabled = true;
+                    submitBtn.classList.add("submit-btn-disabled");
+                }
+            }
+        });
+
+        submitBtn.addEventListener("click", () => {
+            injectAIResult(AIModels.WRITER, writerPromptInput.value, { _tone: tone, _length: length });
+            writerPromptInput.value = "";
+            writerPromptInput.disabled = true;
+            submitBtn.classList.add("submit-btn-disabled");
+        });
     }
     else if (aiModel === AIModels.PROMPT) {
+        resultAreaBlock.classList.add("disable-element");
+        promptAreaBlock.classList.remove("disable-element");
         originalTextTitle.classList.add('disable-element');
         originalText.classList.add('disable-element');
         resultTextTitle.classList.add('disable-element');
@@ -293,6 +383,7 @@ async function setExtensionUI(extensionUI, aiModel, selectedText) {
         translatorInputGrp.classList.add('disable-element');
         rewriterInputGrp.classList.add('disable-element');
         promptInputGrp.classList.remove('disable-element');
+        writerInputGrp.classList.add('disable-element');
 
         submitBtn.classList.remove("submit-btn-disabled");
     }
@@ -304,23 +395,26 @@ function closeExtensionUI() {
     extensionUI.style.display = 'none';
 }
 
-async function injectAIResult(aiModel, selectedText, additionalParams) {
+async function injectAIResult(aiModel, inputText, additionalParams) {
     const injectedIframe = document.getElementById("injected-iframe");
     const aiResultTextArea = injectedIframe.contentDocument.getElementById("result-text");
     const submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
+    const writerPromptInput = injectedIframe.contentDocument.getElementById("w-prompt-input");
+    const promptResultsArea = injectedIframe.contentDocument.getElementById("prompt-results-area");
+
 
     aiResultTextArea.innerHTML = "Generating...";
     aiResultTextArea.classList.remove('disable-animations');
 
     if (aiModel === AIModels.SUMMARIZER) {
-        aiResultTextArea.innerHTML = await marked.parse(await summarize(selectedText));
+        aiResultTextArea.innerHTML = await marked.parse(await summarize(inputText));
     }
     else if (aiModel === AIModels.PROOFREADER) {
-        aiResultTextArea.innerHTML = await proofread(selectedText);
+        aiResultTextArea.innerHTML = await proofread(inputText);
     }
     else if (aiModel === AIModels.TRANSLATOR) {
         try {
-            aiResultTextArea.innerHTML = await translate(selectedText, additionalParams.sourceLang, additionalParams.targetedLang);
+            aiResultTextArea.innerHTML = await translate(inputText, additionalParams.sourceLang, additionalParams.targetedLang);
         }
         catch {
             aiResultTextArea.innerHTML = "The Translator is still downloading. Please try again.";
@@ -329,13 +423,35 @@ async function injectAIResult(aiModel, selectedText, additionalParams) {
     }
     else if (aiModel === AIModels.REWRITER) {
         try {
-            aiResultTextArea.innerHTML = await rewrite(selectedText, additionalParams._tone, additionalParams._length);
+            aiResultTextArea.innerHTML = await rewrite(inputText, additionalParams._tone, additionalParams._length);
         }
         catch {
             aiResultTextArea.innerHTML = "The Rewriter is still downloading. Please try again.";
         }
         submitBtn.classList.remove("submit-btn-disabled");
     }
+    else if (aiModel === AIModels.WRITER) {
+        const newInputElement = document.createElement("div");
+        const newOutputElement = document.createElement("div");
+
+        newInputElement.classList.add("user-input-prompt");
+        newOutputElement.classList.add("prompt-output");
+
+        promptResultsArea.appendChild(newInputElement);
+        promptResultsArea.appendChild(newOutputElement);
+
+        newInputElement.textContent = inputText;
+
+        try {
+            newOutputElement.innerHTML = await marked.parse(await writer(inputText, additionalParams._tone, additionalParams._length));
+        }
+        catch {
+            newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
+        }
+        writerPromptInput.disabled = false;
+    }
+
+
     aiResultTextArea.classList.add('disable-animations');
 }
 

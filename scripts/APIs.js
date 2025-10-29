@@ -210,3 +210,52 @@ async function rewrite(content, tone, length) {
 
     return output;
 }
+
+
+async function writer(input, tone, length) {
+    let output = "Writer is working!";
+
+    // if ('Writer' in self) {
+    //     const availability = await Writer.availability();
+
+    //     if (availability === 'unavailable') {
+    //         output = "The Rewriter isn't available right now. Please try again.";
+    //     }
+    //     else if (availability === 'downloading') {
+    //         output = "The Rewriter is still downloading. Please try again.";
+    //         await Translator.create({
+    //             sourceLanguage: sourceLang,
+    //             targetLanguage: targetLang,
+    //         });
+    //     }
+    //     else if (availability === 'downloadable') {
+    //         output = "The Rewriter is still downloading. Please try again.";
+    //         await Translator.create({
+    //             sourceLanguage: sourceLang,
+    //             targetLanguage: targetLang,
+    //         });
+    //     }
+    //     else if (availability === 'available') {
+    //         const rewriter = await Rewriter.create({
+    //             tone: tone,
+    //             length: length,
+    //             format: "plain-text"
+    //         });
+
+    //         try {
+    //             output = await rewriter.rewrite(content);
+    //         }
+    //         catch (error) {
+    //             output = "Input is too large or the Rewriter is not available right now. Please try again.";
+    //         }
+    //     }
+    //     else {
+    //         output = "The Rewriter is still downloading or isn't available right now. Please try again.";
+    //     }
+    // }
+    // else {
+    //     output = "Your browser doesn't support the Rewriter API.";
+    // }
+
+    return output;
+}

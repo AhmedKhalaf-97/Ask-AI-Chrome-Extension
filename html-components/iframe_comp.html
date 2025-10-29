@@ -4,8 +4,8 @@
     </div>
 
     <div id="ai-content">
-        <h2>Result:</h2>
-        <p id="result-block">
+        <!-- <h2>Result:</h2> -->
+        <p class="disable-element" id="result-block">
             <span id="original-text-title">Selected Text:</span>
             <span id="original-text"></span>
 
@@ -13,6 +13,11 @@
             <span id="result-text"></span>
         </p>
 
+        <div id="prompt-results-area">
+            <h2>Ask anything.</h2>
+            <div class="disable-element" class="user-input-prompt"></div>
+            <div class="disable-element" class="prompt-output"></div>
+        </div>
     </div>
 </div>
 
@@ -53,6 +58,25 @@
                     <a id="longer">Longer</a>
                 </div>
             </div>
+        </div>
+        <div class="disable-element" id="writer-input-gp">
+            <div class="dropdown">
+                <button class="dropbtn" id="w-tone-dropdown-btn">Select the Tone: ⤴️</button>
+                <div class="dropdown-content" id="w-tone-dropdown-content">
+                    <a id="neutral">Neutral</a>
+                    <a id="casual">Casual</a>
+                    <a id="formal">Formal</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn" id="w-length-dropdown-btn">Select the Length: ⤴️</button>
+                <div class="dropdown-content" id="w-length-dropdown-content">
+                    <a id="short">Short</a>
+                    <a id="medium">Medium</a>
+                    <a id="long">Long</a>
+                </div>
+            </div>
+            <input type="text" id="w-prompt-input" placeholder="What do you want to write about?">
         </div>
         <div id="prompt-input-gp">
             <input type="text" id="prompt-input" placeholder="Ask anything">

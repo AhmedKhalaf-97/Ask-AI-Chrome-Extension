@@ -154,6 +154,64 @@
 }
 
 
+#prompt-results-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 20px;
+    min-height: 260px;
+}
+
+:root {
+    --user-input-BC: #b7ff7c;
+    --prompt-output-BC: #f7ff61;
+}
+
+.user-input-prompt {
+    position: relative;
+    width: 90%;
+    height: fit-content;
+    background-color: var(--user-input-BC);
+    padding: 20px 10px;
+    margin-left: 20px;
+    margin-bottom: 40px;
+    border-radius: 25px 25px 0px 25px;
+}
+
+.user-input-prompt::before {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    right: 0%;
+    width: 40px;
+    height: 30px;
+    background-color: var(--user-input-BC);
+    clip-path: polygon(0 0, 100% 100%, 100% 0);
+}
+
+
+.prompt-output {
+    position: relative;
+    width: 100%;
+    height: fit-content;
+    background-color: var(--prompt-output-BC);
+    padding: 20px 10px;
+    margin-right: 20px;
+    margin-bottom: 0px;
+    border-radius: 0px 25px 25px 25px;
+}
+
+.prompt-output::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 0%;
+    width: 40px;
+    height: 30px;
+    background-color: var(--prompt-output-BC);
+    clip-path: polygon(0 100%, 100% 100%, 0 0);
+}
 
 #bottom-bar {
     position: sticky;
@@ -189,6 +247,27 @@
     padding-right: 0.5em;
 }
 
+#writer-input-gp {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-bottom: 0.25em;
+}
+
+#w-prompt-input {
+    background-color: rgb(78, 78, 78);
+    color: white;
+    padding: 8px;
+    font-size: 15px;
+    border-radius: 25px;
+    width: 100%;
+
+}
+
 #prompt-input-gp {
     flex-grow: 1;
     padding: 10px;
@@ -203,7 +282,6 @@
     width: 100%;
 
 }
-
 
 .dropdown {
   position: relative;
