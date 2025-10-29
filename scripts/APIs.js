@@ -174,17 +174,11 @@ async function rewrite(content, tone, length) {
         }
         else if (availability === 'downloading') {
             output = "The Rewriter is still downloading. Please try again.";
-            await Translator.create({
-                sourceLanguage: sourceLang,
-                targetLanguage: targetLang,
-            });
+            await Rewriter.create();
         }
         else if (availability === 'downloadable') {
             output = "The Rewriter is still downloading. Please try again.";
-            await Translator.create({
-                sourceLanguage: sourceLang,
-                targetLanguage: targetLang,
-            });
+            await Rewriter.create();
         }
         else if (availability === 'available') {
             const rewriter = await Rewriter.create({
@@ -213,49 +207,85 @@ async function rewrite(content, tone, length) {
 
 
 async function writer(input, tone, length) {
-    let output = "Writer is working!";
+    let output = "";
 
-    // if ('Writer' in self) {
-    //     const availability = await Writer.availability();
+    if ('Writer' in self) {
+        const availability = await Writer.availability();
 
-    //     if (availability === 'unavailable') {
-    //         output = "The Rewriter isn't available right now. Please try again.";
-    //     }
-    //     else if (availability === 'downloading') {
-    //         output = "The Rewriter is still downloading. Please try again.";
-    //         await Translator.create({
-    //             sourceLanguage: sourceLang,
-    //             targetLanguage: targetLang,
-    //         });
-    //     }
-    //     else if (availability === 'downloadable') {
-    //         output = "The Rewriter is still downloading. Please try again.";
-    //         await Translator.create({
-    //             sourceLanguage: sourceLang,
-    //             targetLanguage: targetLang,
-    //         });
-    //     }
-    //     else if (availability === 'available') {
-    //         const rewriter = await Rewriter.create({
-    //             tone: tone,
-    //             length: length,
-    //             format: "plain-text"
-    //         });
+        if (availability === 'unavailable') {
+            output = "The Writer isn't available right now. Please try again.";
+        }
+        else if (availability === 'downloading') {
+            output = "The Writer is still downloading. Please try again.";
+            await Writer.create();
+        }
+        else if (availability === 'downloadable') {
+            output = "The Writer is still downloading. Please try again.";
+            await Writer.create();
+        }
+        else if (availability === 'available') {
+            const writer = await Writer.create({
+                tone: tone,
+                length: length,
+                format: "markdown"
+            });
 
-    //         try {
-    //             output = await rewriter.rewrite(content);
-    //         }
-    //         catch (error) {
-    //             output = "Input is too large or the Rewriter is not available right now. Please try again.";
-    //         }
-    //     }
-    //     else {
-    //         output = "The Rewriter is still downloading or isn't available right now. Please try again.";
-    //     }
-    // }
-    // else {
-    //     output = "Your browser doesn't support the Rewriter API.";
-    // }
+            try {
+                output = writer.writeStreaming(input);
+            }
+            catch (error) {
+                output = "Input is too large or the Writer is not available right now. Please try again.";
+            }
+        }
+        else {
+            output = "The Writer is still downloading or isn't available right now. Please try again.";
+        }
+    }
+    else {
+        output = "Your browser doesn't support the Writer API.";
+    }
+
+    return output;
+}
+
+async function prompt(input) {
+    let output = "";
+
+    if ('LanguageModel' in self) {
+        const availability = await LanguageModel.availability();
+
+        if (availability === 'unavailable') {
+            output = "The Prompt API isn't available right now. Please try again.";
+        }
+        else if (availability === 'downloading') {
+            output = "The Prompt API is still downloading. Please try again.";
+            await LanguageModel.create();
+        }
+        else if (availability === 'downloadable') {
+            output = "The Prompt API is still downloading. Please try again.";
+            await LanguageModel.create();
+        }
+        else if (availability === 'available') {
+            const params = await LanguageModel.params();
+            const session = await LanguageModel.create({
+                temperature: params.defaultTemperature,
+                topK: params.defaultTopK,
+            });
+
+            try {
+                output = session.promptStreaming(input);
+            }
+            catch (error) {
+                output = "The Prompt API is not available right now. Please try again.";
+            }
+        }
+        else {
+            output = "The Prompt API is still downloading or isn't available right now. Please try again.";
+        }
+    }
+    else {
+        output = "Your browser doesn't support the Writer API.";
+    }
 
     return output;
 }

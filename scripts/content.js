@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 });
 
-initiateExtension(AIModels.WRITER);
+initiateExtension(AIModels.PROMPT);
 
 async function initiateExtension(aiModel, inputText) {
     let extensionUI = document.getElementById("draggableIframeWrapper") || null;
@@ -372,8 +372,14 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
             writerPromptInput.disabled = true;
             submitBtn.classList.add("submit-btn-disabled");
         });
+
+        injectedIframe.contentWindow.scrollTo(0, 99999);
     }
     else if (aiModel === AIModels.PROMPT) {
+        const promptInput = injectedIframe.contentDocument.getElementById("prompt-input");
+
+        promptInput.disabled = false;
+
         resultAreaBlock.classList.add("disable-element");
         promptAreaBlock.classList.remove("disable-element");
         originalTextTitle.classList.add('disable-element');
@@ -385,12 +391,41 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
         promptInputGrp.classList.remove('disable-element');
         writerInputGrp.classList.add('disable-element');
 
-        submitBtn.classList.remove("submit-btn-disabled");
+        submitBtn.classList.add("submit-btn-disabled");
+
+        promptInput.addEventListener('input', () => {
+            if (promptInput.value) {
+                submitBtn.classList.remove("submit-btn-disabled");
+            }
+            else {
+                submitBtn.classList.add("submit-btn-disabled");
+            }
+        });
+
+        promptInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                if (promptInput.value) {
+                    injectAIResult(AIModels.PROMPT, promptInput.value);
+                    promptInput.value = "";
+                    promptInput.disabled = true;
+                    submitBtn.classList.add("submit-btn-disabled");
+                }
+            }
+        });
+
+        submitBtn.addEventListener("click", () => {
+            injectAIResult(AIModels.PROMPT, promptInput.value);
+            promptInput.value = "";
+            promptInput.disabled = true;
+            submitBtn.classList.add("submit-btn-disabled");
+        });
+
+        injectedIframe.contentWindow.scrollTo(0, 99999);
     }
 }
 
 function closeExtensionUI() {
-    const extensionUI = document.getElementById("draggableIframeWrapper")
+    const extensionUI = document.getElementById("draggableIframeWrapper");
 
     extensionUI.style.display = 'none';
 }
@@ -399,8 +434,9 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
     const injectedIframe = document.getElementById("injected-iframe");
     const aiResultTextArea = injectedIframe.contentDocument.getElementById("result-text");
     const submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
-    const writerPromptInput = injectedIframe.contentDocument.getElementById("w-prompt-input");
     const promptResultsArea = injectedIframe.contentDocument.getElementById("prompt-results-area");
+    const writerPromptInput = injectedIframe.contentDocument.getElementById("w-prompt-input");
+    const promptInput = injectedIframe.contentDocument.getElementById("prompt-input");
 
 
     aiResultTextArea.innerHTML = "Generating...";
@@ -442,13 +478,47 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
 
         newInputElement.textContent = inputText;
 
+
         try {
-            newOutputElement.innerHTML = await marked.parse(await writer(inputText, additionalParams._tone, additionalParams._length));
+            for await (chunk of await writer(inputText, additionalParams._tone, additionalParams._length)) {
+                newOutputElement.innerHTML += chunk;
+                injectedIframe.contentWindow.scrollTo(0, 99999);
+            }
+            newOutputElement.innerHTML = await marked.parse(newOutputElement.innerHTML);
         }
         catch {
             newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
         }
         writerPromptInput.disabled = false;
+
+        injectedIframe.contentWindow.scrollTo(0, 99999);
+    }
+    else if (aiModel === AIModels.PROMPT) {
+        const newInputElement = document.createElement("div");
+        const newOutputElement = document.createElement("div");
+
+        newInputElement.classList.add("user-input-prompt");
+        newOutputElement.classList.add("prompt-output");
+
+        promptResultsArea.appendChild(newInputElement);
+        promptResultsArea.appendChild(newOutputElement);
+
+        newInputElement.textContent = inputText;
+
+
+        try {
+            for await (chunk of await prompt(inputText)) {
+                newOutputElement.innerHTML += chunk;
+                injectedIframe.contentWindow.scrollTo(0, 99999);
+            }
+            newOutputElement.innerHTML = await marked.parse(newOutputElement.innerHTML);
+        }
+        catch {
+            newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
+        }
+        promptInput.disabled = false;
+
+        injectedIframe.contentWindow.scrollTo(0, 99999);
     }
 
 
