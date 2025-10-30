@@ -5,7 +5,6 @@ async function summarize(content) {
         const availability = await Summarizer.availability();
 
         if (availability === 'unavailable') {
-            // The Summarizer API isn't usable.
             output = "The Summarizer isn't available right now. Please try again.";
         }
         else if (availability === 'downloading') {

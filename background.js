@@ -20,7 +20,7 @@ const pageContextMenuItems = {
 }
 
 chrome.action.onClicked.addListener((tab) => {
-    chrome.tabs.sendMessage(tabs[0].id, { action: AIModels.PROMPT });
+    chrome.tabs.sendMessage(tab.id, { action: AIModels.PROMPT });
 });
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -46,7 +46,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "summarizeContext") {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             chrome.tabs.sendMessage(tabs[0].id, { action: AIModels.SUMMARIZER, data: info.selectionText });
-            // chrome.action.openPopup();
         });
     }
 

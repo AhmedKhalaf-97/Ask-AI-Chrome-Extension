@@ -7,7 +7,7 @@ const AIModels = {
     PROMPT: "Prompt"
 };
 
-// When message receivd from service-worker.js, proceed.
+// When message receivd from background.js, proceed.
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action === AIModels.SUMMARIZER) {
         initiateExtension(AIModels.SUMMARIZER, message.data);
@@ -96,13 +96,6 @@ async function injectExtensionUI(aiModel) {
 
     return draggableIframeWrapper;
 }
-
-function openExtensionUI(extensionUI, aiModel) {
-    extensionUI.style.display = 'block';
-    extensionUI.style.bottom = "0%";
-    extensionUI.style.left = "40%";
-}
-
 
 async function setExtensionUI(extensionUI, aiModel, inputText) {
     const injectedIframe = document.getElementById("injected-iframe");
@@ -404,12 +397,6 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
     }
 }
 
-function closeExtensionUI() {
-    const extensionUI = document.getElementById("draggableIframeWrapper");
-
-    extensionUI.style.display = 'none';
-}
-
 async function injectAIResult(aiModel, inputText, additionalParams) {
     const injectedIframe = document.getElementById("injected-iframe");
     const aiResultTextArea = injectedIframe.contentDocument.getElementById("result-text");
@@ -525,64 +512,4 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
 
 
     aiResultTextArea.classList.add('disable-animations');
-}
-
-function DragElement(element) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-    element.onmousedown = dragMouseDown;
-
-
-    function dragMouseDown(e) {
-        e.preventDefault();
-        // get the mouse cursor position at startup:
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        // call a function whenever the cursor moves:
-        document.onmousemove = elementDrag;
-    }
-
-    function elementDrag(e) {
-        e.preventDefault();
-        // calculate the new cursor position:
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        // set the element's new position:
-        element.style.top = (element.offsetTop - pos2) + "px";
-        element.style.left = (element.offsetLeft - pos1) + "px";
-    }
-
-    function closeDragElement() {
-        // stop moving when mouse button is released:
-        document.onmouseup = null;
-        document.onmousemove = null;
-    }
-}
-
-function createCopyButton() {
-    const copyGroup = document.createElement("div");
-    copyGroup.classList.add("copy-group");
-
-    const copyBtn = document.createElement("button");
-    copyBtn.classList.add("copy-btn");
-    copyBtn.textContent = "📄Copy";
-
-    const copyBtnTooltip = document.createElement("span");
-    copyBtnTooltip.classList.add("copy-btn-tooltip");
-    copyBtnTooltip.classList.add("disable-element");
-    copyBtnTooltip.textContent = "Copied!";
-
-    copyGroup.appendChild(copyBtn);
-    copyGroup.appendChild(copyBtnTooltip);
-
-    copyBtn.addEventListener("click", () => {
-
-        navigator.clipboard.writeText(copyGroup.parentElement.innerText.slice(0, -7));
-        copyBtnTooltip.classList.remove("disable-element");
-        setTimeout(() => { copyBtnTooltip.classList.add("disable-element"); }, 1000);
-    })
-    return copyGroup;
 }

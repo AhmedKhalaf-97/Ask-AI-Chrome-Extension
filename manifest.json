@@ -10,7 +10,6 @@
         "128": "images/icon-128.png"
     },
     "action": {
-        "default_popup": "popup.html",
         "default_icon": "images/icon-128.png"
     },
     "permissions": [
@@ -19,7 +18,7 @@
         "contextMenus"
     ],
     "background": {
-        "service_worker": "service-worker.js"
+        "service_worker": "background.js"
     },
     "web_accessible_resources": [
         {
@@ -39,6 +38,7 @@
         {
             "js": [
                 "libraries/marked.min.js",
+                "scripts/utils.js",
                 "scripts/APIs.js",
                 "scripts/content.js"
             ],
