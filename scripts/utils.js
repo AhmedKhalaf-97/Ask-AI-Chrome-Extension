@@ -1,16 +1,18 @@
+// Re-opens the extension, if it has been already created.  
 function openExtensionUI(extensionUI, aiModel) {
     extensionUI.style.display = 'block';
     extensionUI.style.bottom = "0%";
     extensionUI.style.left = "40%";
 }
 
+// Close the extension.
 function closeExtensionUI() {
     const extensionUI = document.getElementById("draggableIframeWrapper");
 
     extensionUI.style.display = 'none';
 }
 
-
+// Make the extension or any element draggable. 
 function DragElement(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
@@ -46,6 +48,7 @@ function DragElement(element) {
     }
 }
 
+// It will create a copy button that can be added to the AI generated reponses. 
 function createCopyButton() {
     const copyGroup = document.createElement("div");
     copyGroup.classList.add("copy-group");

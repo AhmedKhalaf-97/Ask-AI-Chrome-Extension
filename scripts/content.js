@@ -1,3 +1,4 @@
+// Enum for all built-in APIs used in this extension.
 const AIModels = {
     SUMMARIZER: "Summary",
     PROOFREADER: "Proofread",
@@ -7,7 +8,7 @@ const AIModels = {
     PROMPT: "Prompt"
 };
 
-// When message receivd from background.js, proceed.
+// When message receivd from background.js, proceed initiating the extension.
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action === AIModels.SUMMARIZER) {
         initiateExtension(AIModels.SUMMARIZER, message.data);
@@ -34,20 +35,24 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 });
 
-
+// Create the extension UI.
 async function initiateExtension(aiModel, inputText) {
     let extensionUI = document.getElementById("draggableIframeWrapper") || null;
 
+    // Re-opens the extension if it has been already created.
     if (extensionUI) {
         openExtensionUI(extensionUI, aiModel);
     }
     else {
+        // Create the extension if it has not been yet. 
         extensionUI = await injectExtensionUI(aiModel);
     }
 
+    // Configure the extension UI based on the selected AI model. 
     setExtensionUI(extensionUI, aiModel, inputText);
 }
 
+// Inject the extension UI into the current active page.
 async function injectExtensionUI(aiModel) {
     const layoutURL = chrome.runtime.getURL('html-components/_layout.html');
     const iframeCompURL = chrome.runtime.getURL('html-components/iframe_comp.html');
@@ -63,6 +68,7 @@ async function injectExtensionUI(aiModel) {
     const metaTagElement = document.createElement("meta");
     metaTagElement.setAttribute("charset", "UTF-8");
 
+    // Inject the layout of the extension.
     await fetch(layoutURL).then(res => res.text()).then(async data => {
 
         const layoutElement = document.createElement("div");
@@ -78,8 +84,10 @@ async function injectExtensionUI(aiModel) {
     const closeBtn = document.getElementById("closeBtn");
     const injectedIframe = document.getElementById('injected-iframe');
 
+    // Make the extension draggable.
     DragElement(draggableIframeWrapper);
 
+    // Register a close button.
     aiIcon.src = aiIconURL;
     dragIconImg.src = dragIconURL;
     closeBtn.addEventListener("click", () => {
@@ -90,6 +98,7 @@ async function injectExtensionUI(aiModel) {
     injectedIframe.contentDocument.head.appendChild(cssLink.cloneNode(false));
     injectedIframe.contentDocument.head.appendChild(metaTagElement);
 
+    // Inject an iFrame of the extension, which will be the main UI.
     await fetch(iframeCompURL).then(res => res.text()).then(async data => {
         injectedIframe.contentDocument.body.innerHTML = data;
     });
@@ -97,6 +106,7 @@ async function injectExtensionUI(aiModel) {
     return draggableIframeWrapper;
 }
 
+// Configure the extension UI based on the selected AI model.
 async function setExtensionUI(extensionUI, aiModel, inputText) {
     const injectedIframe = document.getElementById("injected-iframe");
     const extensionTitleHeader = injectedIframe.contentDocument.getElementById("title-header");
@@ -125,6 +135,8 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
     submitBtn.replaceWith(clonedSubmitBtn);
     submitBtn = injectedIframe.contentDocument.getElementById("submit-btn");
 
+    // If/else statements to adjust the UI based on the selected AI model.
+    // injectAIResult() will be called to populate the UI with the AI reponse. 
     if (aiModel === AIModels.SUMMARIZER) {
         resultAreaBlock.classList.remove("disable-element");
         promptAreaBlock.classList.add("disable-element");
@@ -397,6 +409,7 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
     }
 }
 
+// Call the AI APIs, then populate the response to the user. 
 async function injectAIResult(aiModel, inputText, additionalParams) {
     const injectedIframe = document.getElementById("injected-iframe");
     const aiResultTextArea = injectedIframe.contentDocument.getElementById("result-text");
@@ -407,6 +420,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
 
     aiResultTextArea.classList.remove('disable-animations');
 
+    // Try/Catch statements in case of the apis are not available. 
     if (aiModel === AIModels.SUMMARIZER) {
         try {
             for await (chunk of await summarize(inputText)) {
