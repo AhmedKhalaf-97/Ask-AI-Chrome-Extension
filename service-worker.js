@@ -19,6 +19,10 @@ const pageContextMenuItems = {
     'writerContext': "Writing Helper"
 }
 
+chrome.action.onClicked.addListener((tab) => {
+    chrome.tabs.sendMessage(tabs[0].id, { action: AIModels.PROMPT });
+});
+
 chrome.runtime.onInstalled.addListener(() => {
     for (let [id, title] of Object.entries(selectionContextMenuItems)) {
         chrome.contextMenus.create({
