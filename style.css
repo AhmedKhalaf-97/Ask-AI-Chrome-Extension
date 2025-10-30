@@ -1,3 +1,9 @@
+mark {
+  background-color: lightblue;
+  color: navy;
+  font-weight: bold;
+}
+
 #draggableIframeWrapper {
     box-sizing: initial;
 
@@ -111,21 +117,6 @@
     margin-bottom: 100px;
 }
 
-#result-text {
-    animation: colorPulse 3s infinite;
-}
-
-@keyframes colorPulse {
-  0% {
-    color: #000000; 
-  }
-  50% {
-    color: #888888; 
-  }
-  100% {
-    color: #000000; 
-  }
-}
 
 .disable-animations {
   animation: none !important;
@@ -142,9 +133,9 @@
     font-size: 1.1em;
 }
 
-#original-text {
+/* #original-text {
     border-bottom: 1.5px solid gray;
-}
+} */
 
 #original-text, #result-text {
     display: block;
@@ -200,6 +191,7 @@
     margin-right: 20px;
     margin-bottom: 40px;
     border-radius: 0px 25px 25px 25px;
+    animation: colorPulse 1s infinite alternate;
 }
 
 .prompt-output::before {
@@ -211,6 +203,26 @@
     height: 30px;
     background-color: var(--prompt-output-BC);
     clip-path: polygon(0 100%, 100% 100%, 0 0);
+}
+
+@keyframes colorPulse {
+    0% {
+        --prompt-output-BC: #f7ff61;
+    }   
+    25% {
+        --prompt-output-BC: #f8ff7b;    
+    }
+    50% {
+        --prompt-output-BC: #faff9c;    
+        
+    }
+    75% {
+        --prompt-output-BC: #fcffbc;    
+     
+    }
+    100% {
+        --prompt-output-BC: #fdffce;    
+    }
 }
 
 #bottom-bar {

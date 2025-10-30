@@ -2,14 +2,21 @@ async function summarize(content) {
     let output = "";
 
     if ('Summarizer' in self) {
-        // The Summarizer API is supported.
-
         const availability = await Summarizer.availability();
+
         if (availability === 'unavailable') {
             // The Summarizer API isn't usable.
             output = "The Summarizer isn't available right now. Please try again.";
         }
-        else {
+        else if (availability === 'downloading') {
+            output = "The Summarizer is still downloading. Please try again.";
+            await Summarizer.create();
+        }
+        else if (availability === 'downloadable') {
+            output = "The Summarizer is still downloading. Please try again.";
+            await Summarizer.create();
+        }
+        else if (availability === 'available') {
             const summarizer = await Summarizer.create({
                 type: "key-points",
                 length: "short",
@@ -17,7 +24,7 @@ async function summarize(content) {
             });
 
             try {
-                output = await summarizer.summarize(content);
+                output = summarizer.summarizeStreaming(content);
             }
             catch (error) {
                 output = "Input is too large or the Summarizer is not available right now. Please try again.";
@@ -41,7 +48,15 @@ async function proofread(content) {
         if (availability === 'unavailable') {
             output = "The Proofreader isn't available right now. Please try again.";
         }
-        else {
+        else if (availability === 'downloading') {
+            output = "The Proofreader is still downloading. Please try again.";
+            await Proofreader.create();
+        }
+        else if (availability === 'downloadable') {
+            output = "The Proofreader is still downloading. Please try again.";
+            await Proofreader.create();
+        }
+        else if (availability === 'available') {
             const proofreader = await Proofreader.create({
                 expectedInputLanguages: ['en'],
             });
@@ -146,7 +161,7 @@ async function translate(content, sourceLang, targetLang) {
             });
 
             try {
-                output = await translator.translate(content);
+                output = translator.translateStreaming(content);
             }
             catch (error) {
                 output = "Input is too large or the Translator is not available right now. Please try again.";
@@ -188,7 +203,7 @@ async function rewrite(content, tone, length) {
             });
 
             try {
-                output = await rewriter.rewrite(content);
+                output = rewriter.rewriteStreaming(content);
             }
             catch (error) {
                 output = "Input is too large or the Rewriter is not available right now. Please try again.";

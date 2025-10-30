@@ -56,7 +56,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 });
 
-initiateExtension(AIModels.PROMPT);
+// Don't forget to add a Copy btn.
+// initiateExtension(AIModels.PROMPT);
 
 async function initiateExtension(aiModel, inputText) {
     let extensionUI = document.getElementById("draggableIframeWrapper") || null;
@@ -113,7 +114,6 @@ async function injectExtensionUI(aiModel) {
     injectedIframe.contentDocument.head.appendChild(cssLink.cloneNode(false));
     injectedIframe.contentDocument.head.appendChild(metaTagElement);
 
-
     await fetch(iframeCompURL).then(res => res.text()).then(async data => {
         injectedIframe.contentDocument.body.innerHTML = data;
     });
@@ -150,6 +150,7 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
     resultText.textContent = "";
     resultText.classList.add('disable-animations');
 
+
     // Reset all event listeners associated with the submit button.
     const clonedSubmitBtn = submitBtn.cloneNode(true);
     submitBtn.replaceWith(clonedSubmitBtn);
@@ -171,7 +172,8 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
         promptAreaBlock.classList.add("disable-element");
         originalTextTitle.classList.add('disable-element');
         originalText.classList.add('disable-element');
-        resultTextTitle.classList.add('disable-element');
+        resultTextTitle.classList.remove('disable-element');
+        resultTextTitle.textContent = "Corrections:";
         bottomBar.classList.add('disable-element');
 
         injectAIResult(aiModel, inputText);
@@ -225,6 +227,7 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
         }
 
         submitBtn.addEventListener("click", () => {
+            resultText.innerHTML = "";
             injectAIResult(AIModels.TRANSLATOR, inputText, { sourceLang: detectedLang, targetedLang: targetLang });
             submitBtn.classList.add("submit-btn-disabled");
         });
@@ -283,6 +286,7 @@ async function setExtensionUI(extensionUI, aiModel, inputText) {
         }
 
         submitBtn.addEventListener("click", () => {
+            resultText.innerHTML = "";
             injectAIResult(AIModels.REWRITER, inputText, { _tone: tone, _length: length });
             submitBtn.classList.add("submit-btn-disabled");
         });
@@ -438,19 +442,32 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
     const writerPromptInput = injectedIframe.contentDocument.getElementById("w-prompt-input");
     const promptInput = injectedIframe.contentDocument.getElementById("prompt-input");
 
-
-    aiResultTextArea.innerHTML = "Generating...";
     aiResultTextArea.classList.remove('disable-animations');
 
     if (aiModel === AIModels.SUMMARIZER) {
-        aiResultTextArea.innerHTML = await marked.parse(await summarize(inputText));
+        try {
+            for await (chunk of await summarize(inputText)) {
+                aiResultTextArea.innerHTML += chunk;
+            }
+        }
+        catch {
+            aiResultTextArea.innerHTML = "The Summarizer is still downloading. Please try again.";
+        }
+        aiResultTextArea.innerHTML = await marked.parse(aiResultTextArea.innerHTML);
     }
     else if (aiModel === AIModels.PROOFREADER) {
-        aiResultTextArea.innerHTML = await proofread(inputText);
+        try {
+            aiResultTextArea.innerHTML = await proofread(inputText);
+        }
+        catch {
+            aiResultTextArea.innerHTML = "The Proofreader is still downloading. Please try again.";
+        }
     }
     else if (aiModel === AIModels.TRANSLATOR) {
         try {
-            aiResultTextArea.innerHTML = await translate(inputText, additionalParams.sourceLang, additionalParams.targetedLang);
+            for await (chunk of await translate(inputText, additionalParams.sourceLang, additionalParams.targetedLang)) {
+                aiResultTextArea.innerHTML += chunk;
+            }
         }
         catch {
             aiResultTextArea.innerHTML = "The Translator is still downloading. Please try again.";
@@ -459,7 +476,9 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
     }
     else if (aiModel === AIModels.REWRITER) {
         try {
-            aiResultTextArea.innerHTML = await rewrite(inputText, additionalParams._tone, additionalParams._length);
+            for await (chunk of await rewrite(inputText, additionalParams._tone, additionalParams._length)) {
+                aiResultTextArea.innerHTML += chunk;
+            }
         }
         catch {
             aiResultTextArea.innerHTML = "The Rewriter is still downloading. Please try again.";
@@ -490,6 +509,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
             newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
         }
         writerPromptInput.disabled = false;
+        newOutputElement.classList.add('disable-animations');
 
         injectedIframe.contentWindow.scrollTo(0, 99999);
     }
@@ -517,6 +537,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
             newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
         }
         promptInput.disabled = false;
+        newOutputElement.classList.add('disable-animations');
 
         injectedIframe.contentWindow.scrollTo(0, 99999);
     }
