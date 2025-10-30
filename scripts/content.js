@@ -1,25 +1,3 @@
-// function grabAllTextContent() {
-//     let textContent = "";
-//     // document.querySelectorAll("p").forEach(e => { textContent += e.textContent; });
-//     textContent += document.querySelectorAll("p")[2].textContent;
-
-//     return textContent;
-// }
-
-// // When message receivd from popup.js, proceed.
-// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-//     if (message.action === 'performAction') {
-//         // sendResponse({ status: 'success' }); // Optional: Send a response back
-//         console.log("message received.")
-
-//         let textContent = grabAllTextContent();
-
-//         // Send page content to popup.js
-//         chrome.runtime.sendMessage({ data: textContent });
-//     }
-// });
-
-
 const AIModels = {
     SUMMARIZER: "Summary",
     PROOFREADER: "Proofread",
@@ -56,8 +34,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 });
 
-// Don't forget to add a Copy btn.
-// initiateExtension(AIModels.PROMPT);
 
 async function initiateExtension(aiModel, inputText) {
     let extensionUI = document.getElementById("draggableIframeWrapper") || null;
@@ -454,6 +430,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
             aiResultTextArea.innerHTML = "The Summarizer is still downloading. Please try again.";
         }
         aiResultTextArea.innerHTML = await marked.parse(aiResultTextArea.innerHTML);
+        aiResultTextArea.append(createCopyButton());
     }
     else if (aiModel === AIModels.PROOFREADER) {
         try {
@@ -468,6 +445,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
             for await (chunk of await translate(inputText, additionalParams.sourceLang, additionalParams.targetedLang)) {
                 aiResultTextArea.innerHTML += chunk;
             }
+            aiResultTextArea.appendChild(createCopyButton());
         }
         catch {
             aiResultTextArea.innerHTML = "The Translator is still downloading. Please try again.";
@@ -479,6 +457,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
             for await (chunk of await rewrite(inputText, additionalParams._tone, additionalParams._length)) {
                 aiResultTextArea.innerHTML += chunk;
             }
+            aiResultTextArea.appendChild(createCopyButton());
         }
         catch {
             aiResultTextArea.innerHTML = "The Rewriter is still downloading. Please try again.";
@@ -504,6 +483,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
                 injectedIframe.contentWindow.scrollTo(0, 99999);
             }
             newOutputElement.innerHTML = await marked.parse(newOutputElement.innerHTML);
+            newOutputElement.appendChild(createCopyButton());
         }
         catch {
             newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
@@ -532,6 +512,7 @@ async function injectAIResult(aiModel, inputText, additionalParams) {
                 injectedIframe.contentWindow.scrollTo(0, 99999);
             }
             newOutputElement.innerHTML = await marked.parse(newOutputElement.innerHTML);
+            newOutputElement.appendChild(createCopyButton());
         }
         catch {
             newOutputElement.innerHTML = "The Writer is still downloading. Please try again.";
@@ -579,4 +560,29 @@ function DragElement(element) {
         document.onmouseup = null;
         document.onmousemove = null;
     }
+}
+
+function createCopyButton() {
+    const copyGroup = document.createElement("div");
+    copyGroup.classList.add("copy-group");
+
+    const copyBtn = document.createElement("button");
+    copyBtn.classList.add("copy-btn");
+    copyBtn.textContent = "📄Copy";
+
+    const copyBtnTooltip = document.createElement("span");
+    copyBtnTooltip.classList.add("copy-btn-tooltip");
+    copyBtnTooltip.classList.add("disable-element");
+    copyBtnTooltip.textContent = "Copied!";
+
+    copyGroup.appendChild(copyBtn);
+    copyGroup.appendChild(copyBtnTooltip);
+
+    copyBtn.addEventListener("click", () => {
+
+        navigator.clipboard.writeText(copyGroup.parentElement.innerText.slice(0, -7));
+        copyBtnTooltip.classList.remove("disable-element");
+        setTimeout(() => { copyBtnTooltip.classList.add("disable-element"); }, 1000);
+    })
+    return copyGroup;
 }

@@ -133,10 +133,6 @@ mark {
     font-size: 1.1em;
 }
 
-/* #original-text {
-    border-bottom: 1.5px solid gray;
-} */
-
 #original-text, #result-text {
     display: block;
     padding-bottom: 30px;
@@ -207,7 +203,7 @@ mark {
 
 @keyframes colorPulse {
     0% {
-        --prompt-output-BC: #f7ff61;
+        --prompt-output-BC: #f5ff41;
     }   
     25% {
         --prompt-output-BC: #f8ff7b;    
@@ -221,7 +217,7 @@ mark {
      
     }
     100% {
-        --prompt-output-BC: #fdffce;    
+        --prompt-output-BC: #feffea;    
     }
 }
 
@@ -388,4 +384,23 @@ mark {
     background-color: rgb(115,115,115) !important;
     cursor: default;
     pointer-events: none;
+}
+
+.copy-group {
+    position: absolute;
+    bottom: -28px;
+    left: 20px;
+}
+
+.copy-btn {
+    border-radius: 5px;
+    background-color: rgb(86, 86, 86);
+    color: white;
+    height: 25px;
+}
+
+.copy-btn-tooltip {
+    clip-path: polygon(0 50%, 15% 40%, 15% 18%, 100% 18%, 100% 90%, 15% 90%, 15% 60%);
+    background-color: white;
+    padding: 10px 10px 10px 15px;
 }
