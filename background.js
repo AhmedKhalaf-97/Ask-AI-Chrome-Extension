@@ -4,8 +4,8 @@ const AIModels = {
     PROOFREADER: "Proofread",
     TRANSLATOR: "Translator",
     REWRITER: "Rewriter",
-    WRITER: "Writer",
-    PROMPT: "Prompt"
+    WRITER: "Writing Assistant",
+    PROMPT: "Ask Anything"
 };
 
 // Key-value pairs of context menu items that get populated when users selects a text from the webpage.
@@ -19,7 +19,7 @@ const selectionContextMenuItems = {
 // Key-value pairs of context menu items that get populated when users right clicks on the page.
 const pageContextMenuItems = {
     'promptContext': 'Ask Anything',
-    'writerContext': "Writing Helper"
+    'writerContext': "Writing Assistant"
 }
 
 // Open AI Prompt when the user clicks on the extension icon. 

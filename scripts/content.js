@@ -4,8 +4,8 @@ const AIModels = {
     PROOFREADER: "Proofread",
     TRANSLATOR: "Translator",
     REWRITER: "Rewriter",
-    WRITER: "Writer",
-    PROMPT: "Prompt"
+    WRITER: "Writing Assistant",
+    PROMPT: "Ask Anything"
 };
 
 // When message receivd from background.js, proceed initiating the extension.
